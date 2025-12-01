@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+opencv-python-headless
+numpy
+pillow
+elasticsearch==8.14.0
+sentence-transformers
+torch
+transformers
+xgboost
+google-genai
+python-multipart
+httpx
