@@ -1,0 +1,4 @@
+ALTER TABLE skin_profile
+    ADD COLUMN mbti VARCHAR(10) NULL,
+    ADD COLUMN tone VARCHAR(30) NULL;
+

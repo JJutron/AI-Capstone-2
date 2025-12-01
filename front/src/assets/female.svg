@@ -1,0 +1,13 @@
+<svg width="220" height="260" viewBox="0 0 220 260" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 원형 -->
+  <circle cx="110" cy="90" r="60" stroke="white" stroke-width="12"/>
+
+  <!-- 아래 연결선 -->
+  <line x1="110" y1="150" x2="110" y2="200" stroke="white" stroke-width="12"/>
+
+  <!-- 십자가 가로선 -->
+  <line x1="80" y1="200" x2="140" y2="200" stroke="white" stroke-width="12"/>
+
+  <!-- 십자가 세로선 (더 아래로 길게) -->
+  <line x1="110" y1="200" x2="110" y2="240" stroke="white" stroke-width="12"/>
+</svg>

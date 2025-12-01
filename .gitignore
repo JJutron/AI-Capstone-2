@@ -1,0 +1,26 @@
+# Java
+build/
+.gradle/
+bin/
+
+# Node
+node_modules/
+dist/
+
+# Python
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# IDE
+.idea/
+.DS_Store
+EOF
+
+dist/
+dist.zip
+node_modules/
+
+front/src/assets/*
+!front/src/assets/*.svg
