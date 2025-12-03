@@ -95,14 +95,6 @@ AI 융합 캡스톤 디자인 프로젝트
 - **Cloud**: AWS (EC2, S3, CloudFront, Route53)
 - **Web Server**: Nginx
 - **Container**: Docker
-
----
-
-## 📁 프로젝트 구조
-![Uploading Frame 61.png…]()
-
-
-
 ---
 
 ## 🚀 시작하기
@@ -117,9 +109,10 @@ AI 융합 캡스톤 디자인 프로젝트
 - **Docker** (선택사항)
 
 ### 1. 저장소 클론
-h
 git clone https://github.com/JJutron/AI-Capstone-2.git
-cd AI-Capstone-2### 2. 프론트엔드 설정
+cd AI-Capstone-2
+
+### 2. 프론트엔드 설정
 
 cd front
 npm install
