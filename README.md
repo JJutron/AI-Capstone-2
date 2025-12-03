@@ -100,3 +100,167 @@ AI 융합 캡스톤 디자인 프로젝트
 ---
 
 ## 📁 프로젝트 구조
+AI-Capstone-2/
+├── front/ # 프론트엔드 (Vue 3 + TypeScript)
+│ ├── src/
+│ │ ├── api/ # API 클라이언트
+│ │ ├── components/ # Vue 컴포넌트
+│ │ ├── stores/ # Pinia 상태 관리
+│ │ ├── views/ # 페이지 컴포넌트
+│ │ └── router.ts # 라우터 설정
+│ ├── package.json
+│ └── vite.config.ts
+│
+├── backend-fresh-clean/ # 백엔드 (Spring Boot)
+│ ├── src/main/java/com/vegin/
+│ │ ├── auth/ # 인증/인가 모듈
+│ │ ├── config/ # 설정 클래스
+│ │ ├── module/
+│ │ │ ├── analysis/ # 피부 분석 모듈
+│ │ │ └── users/ # 사용자 모듈
+│ │ └── external/ # 외부 서비스 연동
+│ ├── src/main/resources/
+│ │ ├── application.yml # 설정 파일
+│ │ └── db/migration/ # Flyway 마이그레이션
+│ └── build.gradle
+│
+└── AI/ # AI 분석 서비스 (FastAPI)
+├── app.py
+├── skin_fusion.py # 피부 분석 모델
+└── requirements.txt
+
+
+
+---
+
+## 🚀 시작하기
+
+### 사전 요구사항
+
+- **Node.js** 18.x 이상
+- **Java** 17 이상
+- **MySQL** 8.0 이상
+- **Redis** 7.x
+- **Python** 3.9 이상 (AI 서비스용)
+- **Docker** (선택사항)
+
+### 1. 저장소 클론
+h
+git clone https://github.com/JJutron/AI-Capstone-2.git
+cd AI-Capstone-2### 2. 프론트엔드 설정
+
+cd front
+npm install
+npm run dev프론트엔드는 `http://localhost:5173`에서 실행됩니다.
+
+### 3. 백엔드 설정
+
+#### 데이터베이스 설정
+
+CREATE DATABASE vegin;
+CREATE USER 'vegin'@'localhost' IDENTIFIED BY 'veginpass';
+GRANT ALL PRIVILEGES ON vegin.* TO 'vegin'@'localhost';
+FLUSH PRIVILEGES;#### Redis 실행
+sh
+redis-server#### 애플리케이션 실행
+
+cd backend-fresh-clean
+./gradlew bootRun백엔드는 `http://localhost:8080`에서 실행됩니다.
+
+#### 환경 변수 설정
+
+`backend-fresh-clean/src/main/resources/application-prod.yml` 파일을 생성하고 다음 내용을 추가하세요:
+
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/vegin
+    username: vegin
+    password: veginpass
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+jwt:
+  secret: your-secret-key-here
+
+app:
+  frontend-url: http://localhost:5173
+
+aws:
+  s3:
+    bucket-name: your-bucket-name
+    region: ap-northeast-2### 4. AI 서비스 설정 (선택사항)
+
+cd AI
+pip install -r requirements.txt
+uvicorn app:app --host 0.0.0.0 --port 8000---
+
+## 🌐 배포
+
+### AWS 인프라 구성
+
+- **EC2**: Spring Boot 백엔드 서버
+- **S3**: 정적 웹 호스팅 (프론트엔드)
+- **CloudFront**: CDN 및 HTTPS
+- **Route53**: DNS 관리
+- **Nginx**: 리버스 프록시 및 SSL 종료
+
+### 배포 URL
+
+- **프론트엔드**: https://vegin.academy
+- **백엔드 API**: https://api.vegin.academy
+
+---
+
+## 📖 API 문서
+
+자세한 API 문서는 [API_DOCUMENTATION.md](./backend-fresh-clean/API_DOCUMENTATION.md)를 참고하세요.
+
+### 주요 엔드포인트
+
+- `POST /api/auth/signup` - 회원가입
+- `POST /api/auth/login` - 로그인
+- `GET /api/profile` - 프로필 조회
+- `POST /api/analysis/image` - 피부 분석 업로드
+- `GET /api/analysis/{analysisId}` - 분석 결과 조회
+
+---
+
+## 🤝 기여하기
+
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+---
+
+## 📝 라이선스
+
+이 프로젝트는 AI 융합 캡스톤 디자인 프로젝트의 일부입니다.
+
+---
+
+## 👥 팀원
+
+- [@JJutron](https://github.com/JJutron)
+
+---
+
+## 🙏 감사의 말
+
+- MediaPipe 팀 - 얼굴 인식 기술 제공
+- Spring Boot 커뮤니티 - 훌륭한 프레임워크
+- Vue.js 팀 - 우수한 프론트엔드 프레임워크
+
+---
+
+<div align="center">
+
+**Made with ❤️ by Vegin Team**
+
+⭐ 이 프로젝트가 도움이 되었다면 Star를 눌러주세요!
+
+</div>
