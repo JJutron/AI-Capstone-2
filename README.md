@@ -1,6 +1,6 @@
 # AI-Capstone-2
 AI 융합 캡스톤 디자인 프로젝트
-# 🌿 Vegin - AI 기반 맞춤형 피부 분석 및 화장품 추천 서비스
+# 🌿 Vegin - AI 기반 맞춤형 피부 분석 및 비건 화장품 추천 서비스
 
 <div align="center">
 
@@ -9,7 +9,7 @@ AI 융합 캡스톤 디자인 프로젝트
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9.3-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=FastAPI&logoColor=white)
 
-**AI를 활용한 개인 맞춤형 피부 분석 및 화장품 추천 플랫폼**
+**AI를 활용한 개인 맞춤형 피부 분석 및 비건 화장품 추천 플랫폼**
 
 [🚀 배포 사이트](https://vegin.academy) | [📖 API 문서](./backend-fresh-clean/API_DOCUMENTATION.md) | [🐛 이슈 리포트](https://github.com/JJutron/AI-Capstone-2/issues)
 
