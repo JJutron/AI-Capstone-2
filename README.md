@@ -245,22 +245,13 @@ uvicorn app:app --host 0.0.0.0 --port 8000---
 
 ## 👥 팀원
 
-- [@JJutron](https://github.com/JJutron)
-
+- **임용하** - AI
+- **김형주** - Back-end, Infra
+- **장연주** - Front-end, Design
+- **김정욱** - Crawl
 ---
 
 ## 🙏 감사의 말
 
-- MediaPipe 팀 - 얼굴 인식 기술 제공
-- Spring Boot 커뮤니티 - 훌륭한 프레임워크
-- Vue.js 팀 - 우수한 프론트엔드 프레임워크
-
+찾아주셔서 감사합니다
 ---
-
-<div align="center">
-
-**Made with ❤️ by Vegin Team**
-
-⭐ 이 프로젝트가 도움이 되었다면 Star를 눌러주세요!
-
-</div>
