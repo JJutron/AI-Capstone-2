@@ -1,7 +1,19 @@
 <template>
   <article class="product-card" @click="$emit('open', item.productId)">
-    <div class="thumb-wrap">
-      <img :src="item.imageUrl" alt="" class="product-img" />
+    <div class="thumb-wrap" @click.stop>
+      <a 
+        :href="naverShoppingUrl" 
+        target="_blank" 
+        rel="noopener noreferrer"
+        @click.stop
+      >
+        <img 
+          :src="item.imageUrl" 
+          alt="" 
+          class="product-img"
+          @click.stop
+        />
+      </a>
     </div>
 
     <div class="card-body">
@@ -29,6 +41,17 @@ const props = defineProps<{ item: Product }>();
 const formattedPrice = computed(() =>
   props.item.salePrice.toLocaleString() + "원"
 );
+
+const naverShoppingUrl = computed(() => {
+  const productName = props.item.productName || props.item.brand || "";
+  if (!productName) {
+    console.warn("ProductCard: productName이 없습니다.", props.item);
+    return "#";
+  }
+  const encodedProductName = encodeURIComponent(productName);
+  // 네이버 쇼핑 검색 URL (query 파라미터에 상품명 포함)
+  return `https://search.shopping.naver.com/search/all?query=${encodedProductName}`;
+});
 </script>
 
 <style scoped>
@@ -48,9 +71,14 @@ const formattedPrice = computed(() =>
   width: 100%;
   background: #f3f4f4;
 }
+.thumb-wrap a {
+  display: block;
+  width: 100%;
+}
 .product-img {
   width: 100%;
   display: block;
+  cursor: pointer;
 }
 .card-body {
   padding: 10px 12px 12px;

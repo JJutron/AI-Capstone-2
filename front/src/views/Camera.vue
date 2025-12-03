@@ -201,8 +201,14 @@ onMounted(async () => {
     } else insideGuide.value = false;
   });
 
-  mediapipeCamera = new Camera(video.value!, {
-    onFrame: async () => await faceMesh.send({ image: video.value }),
+  if (!video.value) return;
+  
+  mediapipeCamera = new Camera(video.value, {
+    onFrame: async () => {
+      if (video.value) {
+        await faceMesh.send({ image: video.value });
+      }
+    },
   });
 
   mediapipeCamera.start();

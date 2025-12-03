@@ -5,15 +5,15 @@
       <p class="subtitle">나의 비건 화장품 생활의 시작</p>
     </div>
 
-    <button class="login-btn google">
+    <button class="login-btn google" @click="handleGoogleLogin">
       <img src="@/assets/google ic.png" class="icon" />
       Google로 시작하기
     </button>
 
-    <button class="login-btn apple">
+    <!-- <button class="login-btn apple">
       <img src="@/assets/apple.png" class="icon" />
       Apple로 시작하기
-    </button>
+    </button> -->
 
     <div class="divider-box">
       <div class="divider"></div>
@@ -33,7 +33,16 @@
 
 <script setup lang="ts">
 import { useRouter } from "vue-router";
+
 const router = useRouter();
+
+const handleGoogleLogin = () => {
+  // 백엔드 OAuth2 엔드포인트로 리다이렉트
+  const apiBaseUrl = import.meta.env.PROD 
+    ? "https://api.vegin.academy"
+    : "http://52.78.47.96:8080";
+  window.location.href = `${apiBaseUrl}/oauth2/authorization/google`;
+};
 
 const goLogin = () => router.push("/login");
 const goJoin = () => router.push("/join");
@@ -86,10 +95,10 @@ const goJoin = () => router.push("/join");
   border: 1px solid #ddd;
 }
 
-.apple {
+/* .apple {
   background: #fff;
   border: 1px solid #ddd;
-}
+} */
 
 .email {
   background: #27481e;

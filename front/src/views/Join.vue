@@ -60,6 +60,9 @@ import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { signupAPI } from "@/api/axios";
 import { useUserStore } from "@/stores/userStore";
+import back from "@/assets/back.png";
+import eyeOpen from "@/assets/eye-open.svg";
+import eyeClose from "@/assets/eye-close.svg";
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -87,7 +90,7 @@ const handleSignup = async () => {
       password: password.value,
       nickname: nickname.value,
       birthDate: birthDate.value,
-      gender: gender.value === "F" ? "FEMALE" : "MALE",
+      gender: gender.value,  // ✅ "F" 또는 "M" 그대로 전송
     });
 
     alert("회원가입 완료!");

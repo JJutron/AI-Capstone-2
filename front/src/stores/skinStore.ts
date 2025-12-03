@@ -2,15 +2,27 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 
+export interface Product {
+  productId: number;
+  productName: string;
+  brand: string;
+  salePrice: number;
+  imageUrl: string;
+  tags?: string[];
+  averageReviewScore?: number;
+  totalReviewCount?: number;
+  category?: string;
+}
+
 export const useSkinStore = defineStore("skin", () => {
   const analysisResult = ref<any>(null);
   const faceImageUrl = ref("");
   const captureDate = ref("");
 
   // 추천 카테고리 분리
-  const skinToner = ref([]);
-  const ampoule = ref([]);
-  const lotionCream = ref([]);
+  const skinToner = ref<Product[]>([]);
+  const ampoule = ref<Product[]>([]);
+  const lotionCream = ref<Product[]>([]);
 
   const faceFile = ref<File | null>(null);
 

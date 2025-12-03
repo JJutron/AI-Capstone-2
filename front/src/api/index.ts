@@ -1,10 +1,3 @@
-import api from "./axios";
-
-export const submitAnalysisAPI = (image: File, survey: string[]) => {
-  const form = new FormData();
-  form.append("image_url", image);
-  form.append("survey", JSON.stringify(survey));
-  return api.post("/analysis/image", form, {
-    headers: { "Content-Type": "multipart/form-data" }
-  });
-};
+// ✅ 중복 제거: axios.ts에서 export하는 함수를 재export
+export { submitAnalysisAPI, getAnalysisResultAPI, loginAPI, signupAPI } from "./axios";
+export { default as api } from "./axios";

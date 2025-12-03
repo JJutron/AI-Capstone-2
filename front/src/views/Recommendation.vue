@@ -74,6 +74,7 @@
     <!-- 버튼 -->
     <footer class="button-area">
       <button class="green-btn" @click="goHome">홈으로 가기</button>
+      <button class="green-btn" @click="goSurvey">설문하러가기</button>
     </footer>
   </div>
 
@@ -103,7 +104,7 @@ const result = computed(() => store.analysisResult);
 // 카테고리별 안전 처리
 const safeSkinToner = computed(() =>
   Array.isArray(result.value?.recommendations)
-    ? result.value.recommendations.filter(r =>
+    ? result.value.recommendations.filter((r: any) =>
         ["toner", "skintoner", "skin"].includes(r.category?.toLowerCase())
       )
     : []
@@ -111,7 +112,7 @@ const safeSkinToner = computed(() =>
 
 const safeAmpoule = computed(() =>
   Array.isArray(result.value?.recommendations)
-    ? result.value.recommendations.filter(r =>
+    ? result.value.recommendations.filter((r: any) =>
         ["essence", "serum", "ampoule"].includes(r.category?.toLowerCase())
       )
     : []
@@ -119,7 +120,7 @@ const safeAmpoule = computed(() =>
 
 const safeLotionCream = computed(() =>
   Array.isArray(result.value?.recommendations)
-    ? result.value.recommendations.filter(r =>
+    ? result.value.recommendations.filter((r: any) =>
         ["cream", "lotion"].includes(r.category?.toLowerCase())
       )
     : []
@@ -131,6 +132,10 @@ function openDetail(item: any) {
 
 function goHome() {
   router.push("/home");
+}
+
+function goSurvey() {
+  window.open("https://mportal.ajou.ac.kr/main.do", "_blank", "noopener,noreferrer");
 }
 
 function goCamera() {
@@ -223,6 +228,9 @@ function goCamera() {
 
 .button-area {
   margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .green-btn {

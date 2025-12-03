@@ -17,7 +17,7 @@ const QUESTIONS = [
     options: ["전혀 안 보여요", "지금은 없지만 가끔 보여요", "부분적으로 붉게 보여요", "전체적으로 붉게 보여요"],
   },
   {
-    text: "얼굴에 핏불이 도드라져 보이나요? 주변과 양볼을 자세히 봐주세요",
+    text: "얼굴에 핏줄이 도드라져 보이나요? 주변과 양볼을 자세히 봐주세요",
     options: ["전혀 안 보여요", "가끔 붉어지면 보여요", "특정부위에 눈에 띄어요", "곳곳에 많이 보여요"],
   },
   {
@@ -109,13 +109,13 @@ onMounted(() => {
 
       <!-- 질문 -->
       <h1 class="question-text">
-        {{ currentQuestion.text }}
+        {{ currentQuestion?.text }}
       </h1>
 
       <!-- 선택지 -->
       <div class="options-grid">
         <button
-          v-for="option in currentQuestion.options"
+          v-for="option in currentQuestion?.options"
           :key="option"
           class="option-card"
           :class="{ active: selectedAnswer === option }"

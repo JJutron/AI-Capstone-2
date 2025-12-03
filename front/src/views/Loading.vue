@@ -32,10 +32,30 @@ onMounted(async () => {
 
   try {
     const uploadRes = await submitAnalysisAPI(skinStore.faceFile, surveyStore.answers);
-    const { analysisId, s3Url: imageUrl } = uploadRes.data.data;
+    
+    // ✅ 디버깅: 응답 구조 확인
+    console.log("🔍 Upload response:", uploadRes);
+    console.log("🔍 uploadRes.data:", uploadRes.data);
+    console.log("🔍 uploadRes.data.data:", uploadRes.data?.data);
+    
+    // ✅ 응답 구조 확인 및 에러 처리
+    const responseData = uploadRes.data?.data ?? uploadRes.data;
+    
+    if (!responseData) {
+      console.error("❌ No data in response:", uploadRes);
+      throw new Error("응답 데이터가 없습니다.");
+    }
+    
+    const analysisId = responseData.analysisId;
+    const imageUrl = responseData.s3Url || responseData.imageUrl;
+    
+    if (!analysisId) {
+      console.error("❌ No analysisId in response:", responseData);
+      throw new Error("분석 ID를 받지 못했습니다.");
+    }
 
     const resultRes = await getAnalysisResultAPI(analysisId);
-    const data = resultRes.data.data;
+    const data = resultRes.data?.data ?? resultRes.data;
 
     const mapped = {
       imageUrl: imageUrl,
@@ -61,12 +81,21 @@ onMounted(async () => {
       })),
     };
 
-    skinStore.saveResult(mapped);
+    skinStore.saveResult(mapped, imageUrl);
     router.replace("/result");
-  } catch (e) {
-    console.error(e);
+  } catch (e: any) {
+    console.error("❌ Analysis error:", e);
+    console.error("❌ Error response:", e.response);
     isError.value = true;
-    message.value = "분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
+    
+    // ✅ 더 자세한 에러 메시지
+    if (e.response?.data?.message) {
+      message.value = `분석 중 오류가 발생했습니다: ${e.response.data.message}`;
+    } else if (e.message) {
+      message.value = `분석 중 오류가 발생했습니다: ${e.message}`;
+    } else {
+      message.value = "분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
+    }
   }
 });
 </script>

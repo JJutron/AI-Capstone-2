@@ -18,18 +18,24 @@ onMounted(() => {
 
 // ----- 인덱스 값 가져오기 -----
 // MBTI 축: 0 ~ 3 점
-const dryness = computed(() => result.value?.indices?.dryness ?? 1.5); // 건성-지성
+const dryness = computed(() => result.value?.indices?.dry ?? 1.5); // 건성-지성
 const sensitivity = computed(
   () => result.value?.indices?.sensitivity ?? 1.5
 ); // 민감-둔감
 const pigmentation = computed(
-  () => result.value?.indices?.pigmentation ?? 1.5
+  () => result.value?.indices?.pigment ?? 1.5
 ); // 색소-비색소
 const wrinkle = computed(() => result.value?.indices?.wrinkle ?? 1.5); // 주름-탄력
 
-// 고민: 0 ~ 100 점
-const acne = computed(() => result.value?.indices?.acne ?? 0);
-const blemish = computed(() => result.value?.indices?.blemish ?? 0);
+// 고민: 0 ~ 100 점 (visionRaw에서 가져오기)
+const acne = computed(() => {
+  const acneData = result.value?.visionRaw?.acne;
+  return acneData?.score ?? 0;
+});
+const blemish = computed(() => {
+  const melasmaData = result.value?.visionRaw?.melasma_darkspots;
+  return melasmaData?.score ?? 0;
+});
 
 // ----- 값 보정 함수 -----
 // 0~3 양극단 축 (건성↔지성 같은 MBTI 축)
