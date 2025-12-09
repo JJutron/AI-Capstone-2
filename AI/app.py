@@ -14,8 +14,8 @@ from es_ltr_online import recommend_for_request
 
 
 app = FastAPI(
-    title="Vegan Cosmetics Recommendation API",
-    description="피부 분석 + 제품 추천 서비스",
+    title="VE:GIN",
+    description="Vegan Cosmetics Recommendation API",
     version="1.0.0"
 )
 

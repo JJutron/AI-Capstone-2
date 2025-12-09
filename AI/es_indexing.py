@@ -8,13 +8,14 @@ from typing import Any, Dict, List, Optional
 from elasticsearch import Elasticsearch, helpers
 from sentence_transformers import SentenceTransformer
 
-INDEX_NAME = "cosmetics_demo"
+INDEX_NAME = "cosmetics_demo"  
 
 def connect_es() -> Elasticsearch:
-    return Elasticsearch("http://3.37.61.177:9200", request_timeout=60)
+    return Elasticsearch("http://52.78.47.96:9200", request_timeout=60)
 
 EMB_MODEL_NAME = "jhgan/ko-sroberta-multitask"
 emb_model = SentenceTransformer(EMB_MODEL_NAME)
+EMB_DIM = emb_model.get_sentence_embedding_dimension()
 
 
 def load_json(path: str) -> List[Dict[str, Any]]:
@@ -62,42 +63,6 @@ def make_product_id(item: Dict[str, Any], category: str) -> str:
     return hashlib.md5(base.encode("utf-8")).hexdigest()
 
 
-def recreate_index(es: Elasticsearch):
-    if es.indices.exists(index=INDEX_NAME):
-        print(f"[INFO] 기존 인덱스 {INDEX_NAME} 삭제 중...")
-        es.indices.delete(index=INDEX_NAME)
-
-    print(f"[INFO] 인덱스 {INDEX_NAME} 생성 중...")
-    body = {
-        "mappings": {
-            "properties": {
-                "product_id": {"type": "keyword"},
-                "category": {"type": "keyword"},
-                "productName": {
-                    "type": "text",
-                    "fields": {"keyword": {"type": "keyword"}}
-                },
-                "brand": {"type": "keyword"},
-                "salePrice": {"type": "float"},
-                "averageReviewScore": {"type": "float"},
-                "totalReviewCount": {"type": "integer"},
-                "ingredients": {"type": "keyword"},
-                "review_text": {"type": "text"},
-                "review_vector": {
-                    "type": "dense_vector",
-                    "dims": 768,
-                    "index": True,
-                    "similarity": "cosine",
-                },
-                "image_url": {"type": "keyword"},
-                "xai_keywords": {"type": "keyword"},
-            }
-        }
-    }
-    es.indices.create(index=INDEX_NAME, body=body)
-    print("[INFO] 인덱스 생성 완료.")
-
-
 def build_doc(item: Dict[str, Any], category: str) -> Dict[str, Any]:
     ing_raw = (
         (item.get("ingredientsInfo") or {}).get("ingredients")
@@ -105,7 +70,7 @@ def build_doc(item: Dict[str, Any], category: str) -> Dict[str, Any]:
     )
     ingredients = normalize_ingredients(ing_raw)
     review_text = build_review_text(item)
-    review_vec = emb_model.encode(review_text).tolist()
+    review_vec = emb_model.encode(review_text, normalize_embeddings=True).tolist()
     image_url = extract_image_url(item)
 
     doc = {
@@ -124,9 +89,43 @@ def build_doc(item: Dict[str, Any], category: str) -> Dict[str, Any]:
     return doc
 
 
+def clear_all_docs(es: Elasticsearch):
+    print(f"[INFO] 인덱스 {INDEX_NAME} 안의 모든 문서 삭제 시작...")
+
+    query = {"query": {"match_all": {}}}
+
+    scan_iter = helpers.scan(
+        es,
+        index=INDEX_NAME,
+        query=query,
+        _source=False,
+    )
+
+    actions = []
+    deleted = 0
+
+    for doc in scan_iter:
+        actions.append({
+            "_op_type": "delete",
+            "_index": INDEX_NAME,
+            "_id": doc["_id"],
+        })
+        deleted += 1
+
+        if len(actions) >= 1000:
+            helpers.bulk(es, actions, request_timeout=600)
+            actions.clear()
+            print(f"[INFO] 삭제 진행 중... 현재까지 {deleted}건 삭제")
+
+    if actions:
+        helpers.bulk(es, actions, request_timeout=600)
+
+    print(f"[INFO] 전체 문서 삭제 완료. 삭제 개수: {deleted}")
+
+
 def bulk_index(es: Elasticsearch, json_path: str, category: str):
     data = load_json(json_path)
-    print(f"[INFO] {json_path} ({category}) 문서 수: {len(data)}")
+    print(f"[INFO] {json_path} ({category}) 원본 문서 수: {len(data)}")
 
     actions = []
     for item in data:
@@ -134,35 +133,32 @@ def bulk_index(es: Elasticsearch, json_path: str, category: str):
         actions.append(
             {
                 "_index": INDEX_NAME,
-                "_id": doc["product_id"],
+                "_id": doc["product_id"],   
                 "_source": doc,
             }
         )
 
+    if not actions:
+        print(f"[WARN] {json_path}에서 인덱싱할 문서가 없습니다.")
+        return
+
     helpers.bulk(es, actions, request_timeout=600)
-    print(f"[INFO] {category} 인덱싱 완료. 문서 수: {len(actions)}")
+    print(f"[INFO] {category} 재인덱싱 완료. 문서 수: {len(actions)}")
 
 
 TOKEN_RE = re.compile(r"[가-힣A-Za-z0-9]{2,}")
 
 STOPWORDS = {
-    # 일반적인 말투 / 조사 / 강조
     "정말", "너무", "진짜", "그냥", "좀", "조금", "약간",
     "그리고", "그래서", "하지만", "근데", "이런", "저런",
     "이제", "다시", "오늘", "내일", "어제",
     "아주", "계속", "많이", "거의", "살짝",
     "아직",
-
-    # 구매/배송/가격 등 설명에 큰 도움 안 되는 것들
     "사용", "제품", "구매", "배송", "포장", "가격",
     "판매", "주문", "재구매", "서비스",
     "가성비", "세일", "할인",
-
-    # 시간/횟수
     "처음", "이번", "예전", "요즘", "항상", "매번", "며칠", "하루",
     "한번", "전에", "요즘에",
-
-    # 문장 끝/동사 활용
     "좋아요", "좋았어요", "좋네요", "좋습니다", "좋았습니",
     "좋고", "좋아서", "좋은", "좋다고",
     "느낌이", "느낌",
@@ -172,31 +168,34 @@ STOPWORDS = {
     "사용중", "사용해요", "사용하고", "사용중입니다",
     "쓰고있어요", "쓰고있습니다", "쓰고",
     "쓰면", "써보고", "쓰기",
-
-    # 바르다/사용하다 동사류
     "발라요", "발랐어요", "바르면", "바르고", "바를때",
     "발라줬어요", "발라줍니다", "발라주고",
-
-    # 너무 일반적인 화장품/피부 단어
     "피부", "피부가", "피부에", "피부는", "피부를",
     "얼굴", "얼굴이",
     "크림", "에센스", "토너", "로션", "스킨",
     "세럼", "앰플", "마스크", "팩", "기초", "화장품",
     "수분크림",
-
-    # 상품 메타 관련
     "제품이", "제품은", "제품이라", "제품이에요", "제품입니다",
     "상품", "상품이", "비건",
-
-    # 리뷰 관용구 / 형식적인 말
     "꾸준히", "만족합니다", "만족해요", "만족스럽고", "만족스러워요",
     "효과가", "효과는", "효과도", "효과를",
     "도움이", "도움", "감사합니다",
-
-    # 기타
     "빠른", "빠르게", "빨리",
 }
 
+CANON_MAP = {
+    "가벼운": "가볍",
+    "가볍게": "가볍",
+    "끈적임": "끈적",
+
+    "보습감": "보습",
+    "보습력": "보습",
+    "수분감": "수분",
+
+    "진정이": "진정",
+    "진정되고": "진정",
+    "진정되는": "진정",
+}
 
 STEM_PATTERNS = [
     (re.compile(r"^(촉촉)[가-힣]*$"), "촉촉"),
@@ -208,13 +207,13 @@ STEM_PATTERNS = [
     (re.compile(r"^(쫀쫀)[가-힣]*$"), "쫀쫀"),
 ]
 
-
 def _normalize_token(tok: str) -> str:
+    if tok in CANON_MAP:
+        return CANON_MAP[tok]
     for pat, base in STEM_PATTERNS:
         if pat.match(tok):
             return base
     return tok
-
 
 def tokenize(text: str):
     raw = TOKEN_RE.findall(text.lower())
@@ -228,35 +227,22 @@ def tokenize(text: str):
         tokens.append(norm)
     return tokens
 
-
-# 효과/고민 관련 키워드 (제형 제외)
 EFFECT_KEYWORDS = {
-    # 보습/수분
     "보습", "보습력", "보습감",
     "수분", "수분감",
-
-    # 진정/쿨링
     "진정", "진정이", "진정효과", "진정되는", "진정되고",
     "쿨링", "쿨링감", "시원",
-
-    # 고민 계열
     "트러블", "여드름",
     "민감", "민감성", "예민", "예민한",
     "자극", "저자극",
-
     "건조", "속건조", "각질",
     "유분", "유분감", "번들거림",
     "모공", "피지",
-
     "미백", "톤업", "기미", "잡티",
     "탄력", "주름",
-
-    # 피부 타입
     "지성", "건성", "복합성", "수부지", "중성",
 }
 
-
-# 사용감(텍스처/센서리) 키워드
 FEELING_KEYWORDS = {
     "촉촉", "쫀쫀", "산뜻",
     "끈적", "끈적임",
@@ -267,8 +253,13 @@ FEELING_KEYWORDS = {
     "시원", "쿨링",
 }
 
+FEELING_SLOT2_KEYWORDS = {
+    "쫀쫀", "산뜻", "보송",
+    "가볍",  
+    "리치",
+    "시원", "쿨링",
+}
 
-# 대표적인 성분 키워드
 INGREDIENT_KEYWORDS = {
     "나이아신아마이드", "비타민c", "트라넥삼산",
     "레티놀", "아데노신",
@@ -277,7 +268,6 @@ INGREDIENT_KEYWORDS = {
     "녹차", "프로폴리스",
     "살리실산", "bha", "aha",
 }
-
 
 NEGATIVE_PROBLEM_TOKENS = {
     "여드름", "트러블",
@@ -298,6 +288,49 @@ NEGATIVE_PROBLEM_TOKENS = {
     "주름", "팔자주름",
 }
 
+IMPROVEMENT_LABEL_BY_NEG = {
+    "여드름": "트러블 완화",
+    "트러블": "트러블 완화",
+
+    "민감": "민감 피부 진정",
+    "민감성": "민감 피부 진정",
+    "예민": "민감 피부 진정",
+    "예민한": "민감 피부 진정",
+
+    "건조": "건조 완화",
+    "속건조": "속건조 완화",
+    "악건성": "악건성 완화",
+    "당김": "당김 완화",
+    "속당김": "속당김 완화",
+
+    "가려움": "가려움 완화",
+    "가렵다": "가려움 완화",
+    "가렵고": "가려움 완화",
+
+    "따가움": "자극 완화",
+    "따갑다": "자극 완화",
+    "따가워요": "자극 완화",
+
+    "자극": "자극 완화",
+
+    "홍조": "홍조 완화",
+    "붉은기": "홍조 완화",
+
+    "모공": "모공 케어",
+    "피지": "피지 케어",
+
+    "기미": "기미 완화",
+    "잡티": "잡티 완화",
+    "색소침착": "톤/색소 개선",
+
+    "주름": "주름 개선",
+    "팔자주름": "주름 개선",
+
+    "지성": "지성 피부 개선",
+    "건성": "건성 피부 개선",
+    "복합성": "복합성 피부 개선",
+    "수부지": "수부지 개선",
+}
 
 TAIL_CANON = {
     "완화": "완화",
@@ -327,10 +360,8 @@ TAIL_CANON = {
 }
 POSITIVE_TAIL_TOKENS = set(TAIL_CANON.keys())
 
-
 def canonicalize_tail(tok: str) -> str:
     return TAIL_CANON.get(tok, tok)
-
 
 TAIL_ALLOWED_NEG = {
     "완화": NEGATIVE_PROBLEM_TOKENS,
@@ -346,7 +377,6 @@ TAIL_ALLOWED_NEG = {
     },
 }
 
-
 def _is_verb_like(tok: str) -> bool:
     if tok in NEGATIVE_PROBLEM_TOKENS:
         return False
@@ -360,19 +390,19 @@ def _is_verb_like(tok: str) -> bool:
         return True
     return False
 
-
 def _build_improvement_keyword(freq: dict) -> str:
     neg_in_review = [n for n in NEGATIVE_PROBLEM_TOKENS if freq.get(n, 0) > 0]
     raw_tail_in_review = [t for t in POSITIVE_TAIL_TOKENS if freq.get(t, 0) > 0]
+
+    best_neg = None
+    best_tail = None
+    best_score = -1
 
     if neg_in_review and raw_tail_in_review:
         tail_freq_canon = defaultdict(int)
         for t in raw_tail_in_review:
             c = canonicalize_tail(t)
             tail_freq_canon[c] += freq[t]
-
-        best_pair = None
-        best_score = -1
 
         for canon_tail, t_freq in tail_freq_canon.items():
             allowed_negs = TAIL_ALLOWED_NEG.get(canon_tail, NEGATIVE_PROBLEM_TOKENS)
@@ -382,22 +412,32 @@ def _build_improvement_keyword(freq: dict) -> str:
                 score = freq[neg] * t_freq
                 if score > best_score:
                     best_score = score
-                    best_pair = (neg, canon_tail)
+                    best_neg = neg
+                    best_tail = canon_tail
 
-        if best_pair:
-            neg, canon_tail = best_pair
-            return f"{neg} {canon_tail}"
+    if best_neg:
+        label = IMPROVEMENT_LABEL_BY_NEG.get(best_neg)
+        if label:
+            return label
+        if best_tail in {"완화", "개선", "케어", "진정"}:
+            return f"{best_neg} {best_tail}"
+        return f"{best_neg} 개선"
 
     if neg_in_review:
         neg_in_review.sort(key=lambda n: freq[n], reverse=True)
-        return f"{neg_in_review[0]} 개선"
+        top_neg = neg_in_review[0]
+        label = IMPROVEMENT_LABEL_BY_NEG.get(top_neg)
+        if label:
+            return label
+        return f"{top_neg} 개선"
 
     if raw_tail_in_review:
         tail = canonicalize_tail(max(raw_tail_in_review, key=lambda t: freq[t]))
+        if tail in {"완화", "개선", "진정", "케어"}:
+            return f"피부 {tail}"
         return f"피부 {tail}"
 
     return "보습 개선"
-
 
 def _pick_best_from_group(group: set, freq: dict, banned: set) -> Optional[str]:
     cand = [
@@ -410,7 +450,6 @@ def _pick_best_from_group(group: set, freq: dict, banned: set) -> Optional[str]:
     cand.sort(key=lambda x: x[1], reverse=True)
     return cand[0][0]
 
-
 def _pick_fallback_any(freq: dict, banned: set) -> Optional[str]:
     cand = [
         (t, c)
@@ -422,10 +461,26 @@ def _pick_fallback_any(freq: dict, banned: set) -> Optional[str]:
     cand.sort(key=lambda x: x[1], reverse=True)
     return cand[0][0]
 
+def _pick_slot3(freq: dict, banned: set) -> Optional[str]:
+    ing = _pick_best_from_group(INGREDIENT_KEYWORDS, freq, banned)
+    if ing:
+        return ing
+
+    CORE_EFFECTS = {"보습", "수분", "진정", "미백", "탄력", "톤업"}
+    eff = _pick_best_from_group(CORE_EFFECTS, freq, banned)
+    if eff:
+        return eff
+
+    effect_group = (EFFECT_KEYWORDS - NEGATIVE_PROBLEM_TOKENS)
+    eff2 = _pick_best_from_group(effect_group, freq, banned)
+    if eff2:
+        return eff2
+
+    return _pick_fallback_any(freq, banned)
 
 def extract_keywords_from_review_text(review_text, ingredients=None, topk=3):
     if not review_text:
-        return ["보습 개선", "촉촉", "진정"]
+        return ["보습 개선", "산뜻"]
 
     freq = defaultdict(int)
 
@@ -439,28 +494,23 @@ def extract_keywords_from_review_text(review_text, ingredients=None, topk=3):
             freq[tok] += 1
 
     if not freq:
-        return ["보습 개선", "촉촉", "진정"]
+        return ["보습 개선", "산뜻"]
 
     slot1 = _build_improvement_keyword(freq)
     banned = set(slot1.split())
 
-    slot2 = _pick_best_from_group(FEELING_KEYWORDS, freq, banned)
-    if slot2 is None:
-        slot2 = _pick_fallback_any(freq, banned)
+    slot2 = _pick_best_from_group(FEELING_SLOT2_KEYWORDS, freq, banned)
     if slot2:
         banned.add(slot2)
 
-    formulation_group = (
-        (EFFECT_KEYWORDS | INGREDIENT_KEYWORDS)
-        - FEELING_KEYWORDS
-        - NEGATIVE_PROBLEM_TOKENS
-    )
+    slot3 = _pick_slot3(freq, banned)
 
-    slot3 = _pick_best_from_group(formulation_group, freq, banned)
-    if slot3 is None:
-        slot3 = _pick_fallback_any(freq, banned)
+    slots = [slot1]
+    if slot2:
+        slots.append(slot2)
+    if slot3:
+        slots.append(slot3)
 
-    slots = [slot1, slot2 or "촉촉", slot3 or "진정"]
     return slots[:topk]
 
 
@@ -503,12 +553,12 @@ def run_xai_indexing(es: Elasticsearch):
         updated_cnt += 1
 
         if len(actions) >= 1000:
-            helpers.bulk(es, actions)
+            helpers.bulk(es, actions, request_timeout=600)
             actions.clear()
             print(f"[XAI] 중간 커밋: 현재까지 {updated_cnt}건 업데이트")
 
     if actions:
-        helpers.bulk(es, actions)
+        helpers.bulk(es, actions, request_timeout=600)
 
     print(f"[XAI] 완료: xai_keywords 업데이트 {updated_cnt}건")
 
@@ -516,7 +566,13 @@ def run_xai_indexing(es: Elasticsearch):
 def main():
     es = connect_es()
 
-    recreate_index(es)
+    if not es.indices.exists(index=INDEX_NAME):
+        raise RuntimeError(
+            f"인덱스 {INDEX_NAME} 가 존재하지 않습니다. "
+            f"먼저 백엔드/서버에서 인덱스를 한 번 만들어줘야 합니다."
+        )
+
+    clear_all_docs(es)
 
     base = os.getcwd()
     files = [
@@ -531,7 +587,7 @@ def main():
             continue
         bulk_index(es, path, cat)
 
-    print("[DONE] ES 기본 인덱싱 완료.")
+    print("[DONE] ES 기본 재인덱싱 완료.")
 
     run_xai_indexing(es)
     print("[DONE] XAI 키워드 인덱싱까지 전체 완료.")

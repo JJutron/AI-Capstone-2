@@ -51,29 +51,122 @@ NEG_ING = {
     "acne": {"코코넛 오일", "아이소프로필 미리스테이트", "라놀린"},
 }
 
+def level_oil(x: float) -> str:
+    if x > 1.60:
+        return "high"
+    elif x > 0.85:
+        return "mid"
+    else:
+        return "low"
+
+
+def level_sen(x: float) -> str:
+    if x > 1.30:
+        return "high"
+    elif x > 0.90:
+        return "mid"
+    else:
+        return "low"
+
+
+def level_dry(x: float) -> str:
+    if x >= 3:
+        return "high"
+    elif x >= 2:
+        return "mid"
+    else:
+        return "low"
+
+
+def level_pig(x: float) -> str:
+    if x > 1.65:
+        return "high"
+    elif x > 1.25:
+        return "mid"
+    else:
+        return "low"
+
 
 def _make_pos_neg_vocab(fusion):
     idx = fusion["indices"]
+
+    oil = float(idx.get("oil", 0.0))
+    dry = float(idx.get("dry", 0.0))
+    sens = float(idx.get("sensitivity", 0.0))
+    pigment = float(idx.get("pigment", 0.0))
+
+    oil_level = level_oil(oil)
+    dry_level = level_dry(dry)
+    sen_level = level_sen(sens)
+    pig_level = level_pig(pigment)
+
     pos, neg = set(), set()
-    if idx["pigment"] >= 2:
+
+    if pig_level == "high":
         pos |= POS_ING["pigment"]
-    if idx["sensitivity"] >= 2:
+
+    if sen_level == "high":
         pos |= POS_ING["sensitivity"]
         neg |= NEG_ING["sensitivity"]
-    if idx["dry"] >= 2:
+
+    if dry_level == "high":
         pos |= POS_ING["dry"]
-    if idx["oil"] >= 2:
+
+    if oil_level == "high":
         pos |= POS_ING["acne"]
         neg |= NEG_ING["acne"]
+
     return pos, neg
+
+
+def _mbti_to_text(mbti: str) -> str:
+    if not mbti:
+        return ""
+
+    mbti = mbti.upper()
+    parts = []
+
+    first = {
+        "O": "유분이 많은",          
+        "D": "건조한",              
+    }
+
+    second = {
+        "S": "민감한",              
+        "R": "저항성이 좋은",       
+    }
+
+    third = {
+        "P": "색소 침착이 고민인",   
+        "N": "색소 침착이 적은",     
+    }
+
+    fourth = {
+    "W": "주름이 고민인",       
+    "T": "탱탱한",              
+}
+
+    tables = [first, second, third, fourth]
+
+    for i, ch in enumerate(mbti):
+        if i < len(tables) and ch in tables[i]:
+            parts.append(tables[i][ch])
+
+    return " ".join(parts)
 
 
 def search_candidates(fusion, per_cat: int = 15):
     es = get_es()
     model = get_model()
 
-    qtext = fusion["skin_type"]
+    skin_type = fusion.get("skin_type", "")
+    mbti_text = _mbti_to_text(fusion.get("skin_mbti", ""))
+
+    qtext = (skin_type + " " + mbti_text).strip()
+    if not qtext:
+        qtext = skin_type or "피부"  
     qvec = model.encode(qtext).tolist()
+
     out: Dict[str, List[dict]] = {}
 
     for cat in CATEGORIES:
@@ -129,6 +222,8 @@ def featurize(results, fusion):
     pos, neg = _make_pos_neg_vocab(fusion)
     X, group, info = [], [], []
 
+    scale = 0.5 
+
     for cat in CATEGORIES:
         rows = results.get(cat, [])
         group.append(len(rows))
@@ -141,9 +236,9 @@ def featurize(results, fusion):
             price = math.log1p(r.get("salePrice") or 0.0)
             X.append(
                 [
-                    pos_hits,
-                    neg_hits,
-                    pos_hits - neg_hits,
+                    pos_hits * scale,
+                    neg_hits * scale,
+                    (pos_hits - neg_hits) * scale,
                     avg,
                     cnt,
                     price,
@@ -183,9 +278,10 @@ def recommend_for_request(fusion_json: dict, topk: int = 3) -> List[dict]:
     ranked.sort(key=lambda x: x["score_ltr"], reverse=True)
 
     topk_ranked = _topk_per_category(ranked, k=topk)
-
+    
     for item in topk_ranked:
         item["xai_keywords"] = item.get("xai_keywords") or []
+        item.pop("review_text", None)
+        item.pop("review_vector", None)
 
     return topk_ranked
-

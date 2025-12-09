@@ -140,55 +140,74 @@ def analyze_with_gemini(image_path: str, api_key: str) -> Dict:
 
 
 MAP: Dict[str, Dict[str, int]] = {
-    "q1": {"없어요": 0, "T존 일부(이마 혹은 코)": 1, "T존 전체(이마와 코)": 2, "얼굴 전체": 3},
+    "q1": {
+        "없어요": 0,
+        "T존 일부(이마 혹은 코)": 1,
+        "T존 전체(이마와 코)": 2,
+        "얼굴 전체": 3,
+    },
+
     "q2": {
         "전혀 안 보여요": 0,
         "지금은 없지만 가끔 보여요": 1,
         "부분적으로 붉게 보여요": 2,
         "전체적으로 붉게 보여요": 3,
     },
-    "q3": {"없어요": 0, "U존 일부(볼 혹은 턱)": 1, "U존 전체(볼과 턱)": 2, "얼굴 전체": 3},
+
+    "q3": {
+        "전혀 안 보여요": 0,
+        "가끔 붉어지면 보여요": 1,
+        "특정부위에 눈에 띄어요": 2,
+        "곳곳에 많이 보여요": 3,
+    },
+
     "q4": {
+        "없어요": 0,
+        "U존 일부(볼 혹은 턱)": 1,
+        "U존 전체(볼과 턱)": 2,
+        "얼굴 전체": 3,
+    },
+
+    "q5": {
+        "생기지 않아요": 0,
+        "하얀 피지가 깔끔하게 나와요": 1,
+        "피고름이 약간 나오고 끈적해요": 2,
+        "크게 곪고 통증이 심해요": 3,
+    },
+
+    "q6": {
         "전혀 생기지 않아요": 0,
         "표정을 지을 때만 생겨요": 1,
         "표정 짓지 않아도 약간 있어요": 2,
         "표정 짓지 않아도 많이 있어요": 3,
     },
-    "q5": {
+
+    "q7": {
         "주름이 없어요": 0,
         "잔주름이에요": 1,
         "깊은 주름이에요": 2,
         "잔주름과 깊은 주름 다 있어요": 3,
     },
-    "q6": {
+
+    "q8": {
         "전혀 생기지 않아요": 0,
         "미소 지을 때만 약간 생겨요": 1,
         "미소 지을 때 진하게 생겨요": 2,
         "미소 짓지 않아도 생겨요": 3,
     },
-    "q7": {
+
+    "q9": {
         "전혀 안 보여요": 0,
         "거의 안 보여요": 1,
         "약간 눈에 띄어요": 2,
         "곳곳에 많이 보여요": 3,
     },
-    "q8": {
-        "주름이 없어요": 0,
-        "잔주름이에요": 1,
-        "깊은 주름이에요": 2,
-        "잔주름과 깊은 주름 다 있어요": 3,
-    },
-    "q9": {
+    
+    "q10": {
         "외출 전보다 윤기가 없어요": 0,
         "외출 전과 변함이 없어요": 1,
         "약간 번들거리고 윤기가 있어요": 2,
         "많이 번들거리고 기름져요": 3,
-    },
-    "q10": {
-        "전혀 안 보여요": 0,
-        "가끔 붉어지면 보여요": 1,
-        "특정부위에 눈에 띄어요": 2,
-        "곳곳에 많이 보여요": 3,
     },
 }
 
@@ -200,11 +219,11 @@ def _to_0_3(x):
     return round(max(0, min(100, v)) / 100 * 3, 2)
 
 def _decide_skin_type(oil: float, dry: float) -> str:
-    if oil >= 2 and dry <= 1:
+    if oil >= 1.7 and dry <= 1:
         return "지성"
-    if dry >= 2 and oil <= 1:
+    if dry >= 2 and oil <= 0.8:
         return "건성"
-    if oil >= 2 and dry >= 2:
+    if 0.8 < oil < 1.7 and dry >= 1:
         return "복합성"
     return "중성"
     
@@ -215,12 +234,12 @@ def compute_skin_mbti(indices: Dict[str, float]) -> str:
     pigment = float(indices.get("pigment", 0.0))
     wrinkle = float(indices.get("wrinkle", 0.0))
 
-    od = "O" if oil >= 1.5 else "D"
-    sr = "S" if sens >= 1.5 else "R"
-    pn = "P" if pigment >= 1.5 else "N"
-    aw = "A" if wrinkle >= 1.5 else "W"
+    od = "O" if oil >= 1.33 else "D"
+    sr = "S" if sens >= 1.108 else "R"
+    pn = "P" if pigment >= 1.46 else "N"
+    tw = "T" if wrinkle >= 1.266 else "W"
 
-    return od + sr + pn + aw
+    return od + sr + pn + tw
 
 def skin_mbti_from_fusion(fusion: Dict) -> str:
     return compute_skin_mbti(fusion.get("indices", {}))
@@ -229,11 +248,11 @@ def skin_mbti_from_fusion(fusion: Dict) -> str:
 def assess_skin_type_from_survey(answers: Dict[str, str]) -> Dict:
     s = {k: MAP[k].get(v, 0) for k, v in answers.items()}
 
-    oil = round(0.6 * s["q1"] + 0.4 * s["q9"], 2)
-    dry = float(s["q3"])
-    sens = round(0.7 * s["q2"] + 0.3 * s["q10"], 2)
-    wrinkle = round(0.4 * s["q4"] + 0.6 * ((s["q5"] + s["q8"]) / 2), 2)
-    pigment = float(s["q7"])
+    oil = round(0.6 * s["q1"] + 0.4 * s["q10"], 2)
+    dry = float(s["q4"])
+    sens = round(0.7 * s["q2"] + 0.3 * s["q3"], 2)
+    wrinkle = round(0.4 * s["q6"] + 0.6 * ((s["q7"] + s["q7"]) / 2), 2)
+    pigment = float(s["q9"])
 
     skin = _decide_skin_type(oil, dry)
 
