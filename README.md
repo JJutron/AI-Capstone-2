@@ -211,7 +211,7 @@ uvicorn app:app --host 0.0.0.0 --port 8000---
 ## 👥 팀원
 
 - **임용하** - AI
-- **김형주** - Back-end, Infra
+- **김형주** - PM (Back-end, Infra, Front-end, Design)
 - **장연주** - Front-end, Design
 - **김정욱** - Crawl
 ---
