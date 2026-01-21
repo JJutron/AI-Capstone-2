@@ -97,70 +97,6 @@ AI 융합 캡스톤 디자인 프로젝트
 - **Container**: Docker
 ---
 
-## 🚀 시작하기
-
-### 사전 요구사항
-
-- **Node.js** 18.x 이상
-- **Java** 17 이상
-- **MySQL** 8.0 이상
-- **Redis** 7.x
-- **Python** 3.9 이상 (AI 서비스용)
-- **Docker** (선택사항)
-
-### 1. 저장소 클론
-git clone https://github.com/JJutron/AI-Capstone-2.git
-cd AI-Capstone-2
-
-### 2. 프론트엔드 설정
-
-cd front
-npm install
-npm run dev프론트엔드는 `http://localhost:5173`에서 실행됩니다.
-
-### 3. 백엔드 설정
-
-#### 데이터베이스 설정
-
-CREATE DATABASE vegin;
-CREATE USER 'vegin'@'localhost' IDENTIFIED BY 'veginpass';
-GRANT ALL PRIVILEGES ON vegin.* TO 'vegin'@'localhost';
-FLUSH PRIVILEGES;#### Redis 실행
-sh
-redis-server#### 애플리케이션 실행
-
-cd backend-fresh-clean
-./gradlew bootRun백엔드는 `http://localhost:8080`에서 실행됩니다.
-
-#### 환경 변수 설정
-
-`backend-fresh-clean/src/main/resources/application-prod.yml` 파일을 생성하고 다음 내용을 추가하세요:
-
-spring:
-  datasource:
-    url: jdbc:mysql://localhost:3306/vegin
-    username: vegin
-    password: veginpass
-  data:
-    redis:
-      host: localhost
-      port: 6379
-
-jwt:
-  secret: your-secret-key-here
-
-app:
-  frontend-url: http://localhost:5173
-
-aws:
-  s3:
-    bucket-name: your-bucket-name
-    region: ap-northeast-2### 4. AI 서비스 설정 (선택사항)
-
-cd AI
-pip install -r requirements.txt
-uvicorn app:app --host 0.0.0.0 --port 8000---
-
 ## 🌐 배포
 
 ### AWS 인프라 구성
@@ -176,11 +112,6 @@ uvicorn app:app --host 0.0.0.0 --port 8000---
 - **프론트엔드**: https://vegin.academy
 - **백엔드 API**: https://api.vegin.academy
 
----
-
-## 📖 API 문서
-
-자세한 API 문서는 [API_DOCUMENTATION.md](./backend-fresh-clean/API_DOCUMENTATION.md)를 참고하세요.
 
 ### 주요 엔드포인트
 
