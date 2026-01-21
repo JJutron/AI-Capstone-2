@@ -2,6 +2,8 @@
 AI 융합 캡스톤 디자인 프로젝트
 # 🌿 Vegin - AI 기반 맞춤형 피부 분석 및 비건 화장품 추천 서비스
 
+![설명](./KakaoTalk_Photo_2026-01-21-18-53-03.png)
+
 <div align="center">
 
 ![Vue](https://img.shields.io/badge/Vue-3.5.24-4FC08D?style=for-the-badge&logo=vue.js&logoColor=white)
