@@ -92,8 +92,8 @@ AI 융합 캡스톤 디자인 프로젝트
 - **Vision Model**: Custom Deep Learning Model
 
 ### Infrastructure
-- **Cloud**: AWS (EC2, S3, CloudFront, Route53)
-- **Web Server**: Nginx
+- **Cloud**: AWS (EC2, S3, CloudFront, CloudFront, Route53)
+- **Web Server**: CloudFlare
 - **Container**: Docker
 ---
 
@@ -169,7 +169,7 @@ uvicorn app:app --host 0.0.0.0 --port 8000---
 - **S3**: 정적 웹 호스팅 (프론트엔드)
 - **CloudFront**: CDN 및 HTTPS
 - **Route53**: DNS 관리
-- **Nginx**: 리버스 프록시 및 SSL 종료
+- **CloudFlare**: 리버스 프록시 및 SSL 종료
 
 ### 배포 URL
 
