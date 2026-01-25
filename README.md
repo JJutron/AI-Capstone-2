@@ -144,7 +144,7 @@ AI 융합 캡스톤 디자인 프로젝트
 ## 👥 팀원
 
 - **임용하** - AI
-- **김형주** - PM (Back-end, AI, Infra, Front-end, Design)
+- **김형주** - PM (Back-end, AI, Infra, Front-end)
 - **장연주** - Front-end, Design
 - **김정욱** - Crawl
 ---
