@@ -6,6 +6,7 @@ bin/
 # Node
 node_modules/
 dist/
+dist.zip
 
 # Python
 venv/
@@ -13,14 +14,22 @@ venv/
 __pycache__/
 *.pyc
 
-# IDE
+# IDE & System
 .idea/
+.vscode/
+*.swp
+*.swo
 .DS_Store
-EOF
+*.iml
 
-dist/
-dist.zip
-node_modules/
+# OS
+Thumbs.db
 
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Project specific
 front/src/assets/*
 !front/src/assets/*.svg
