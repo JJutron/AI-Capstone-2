@@ -296,7 +296,7 @@ AI 융합 캡스톤 디자인 프로젝트
 | :---: | :---: | :---: | :---: |
 | 김형주 | 장연주 | 임용하 | 김정욱 |
 
-**김형주 (PM, Backend, AI, Infrastructure, Frontend)** — 서비스 기획, Spring Boot API 및 인증, AI 서버 연동, AWS 인프라 구성, 프론트엔드 기능 구현
+**김형주 (PM, Backend)** — 서비스 기획, Spring Boot API 및 인증, AI 서버 연동, AWS 인프라 구성, 프론트엔드 기능 구현
 
 <br />
 
