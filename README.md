@@ -292,7 +292,7 @@ VITE_API_URL=http://localhost:8080 npm run dev
 
 AI 융합 캡스톤 디자인 프로젝트
 
-| PM · Backend · AI · Infra · Frontend | Frontend · Design | AI | Crawling |
+| PM · Backend · Infra | Frontend · Design | AI | Crawling |
 | :---: | :---: | :---: | :---: |
 | 김형주 | 장연주 | 임용하 | 김정욱 |
 
